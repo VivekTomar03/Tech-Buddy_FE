@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Grid, Paper, Typography, Box, Button, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress } from '@mui/material';
+import { Container, Stack, Paper, Typography, Box, Button, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { PlayCircle, Award, Target, MessageSquare, Code, TrendingUp, History, Info } from 'lucide-react';
@@ -60,7 +60,7 @@ const Dashboard = () => {
       </Box>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 5 }}>
+      <Stack direction="row" spacing={3} sx={{ mb: 5 }}>
         <StatCard icon={<History size={24} color="#6366f1" />} label="Total Interviews" value={interviews.length} />
         <StatCard icon={<Award size={24} color="#ec4899" />} label="Avg. Score" value={interviews.length > 0 && interviews.some(i => i.score) ? `${Math.round(interviews.filter(i => i.score).reduce((acc, curr) => acc + curr.score, 0) / interviews.filter(i => i.score).length)}%` : '--'} />
         <StatCard icon={<Target size={24} color="#8b5cf6" />} label="Hiring Readiness" value={interviews.length > 3 ? "MNC Ready" : "Practicing"} />
@@ -70,11 +70,12 @@ const Dashboard = () => {
           const diff = scores[scores.length - 1] - scores[0];
           return (diff >= 0 ? '+' : '') + diff + '%';
         })()} />
-      </Grid>
+      </Stack>
 
-      <Grid container spacing={3}>
-        {/* Progress Chart */}
-        <Grid item xs={12} lg={8}>
+      {/* Row 1: Charts side by side */}
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ mb: 5 }}>
+        {/* Performance Trend */}
+        <Box sx={{ flex: '0 0 65%' }}>
           <Paper className="glass-card" sx={{ p: 4, height: '100%' }}>
             <Typography variant="h6" sx={{ mb: 4, fontWeight: 700 }}>Performance Trend</Typography>
             <Box sx={{ height: 300, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -90,7 +91,7 @@ const Dashboard = () => {
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
                     <YAxis stroke="#94a3b8" fontSize={12} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                       itemStyle={{ color: '#fff' }}
                     />
@@ -105,10 +106,10 @@ const Dashboard = () => {
               )}
             </Box>
           </Paper>
-        </Grid>
+        </Box>
 
         {/* Skill Analysis */}
-        <Grid item xs={12} lg={4}>
+        <Box sx={{ flex: '1 1 35%' }}>
           <Paper className="glass-card" sx={{ p: 4, height: '100%' }}>
             <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>Skill Analysis</Typography>
             {(() => {
@@ -137,70 +138,66 @@ const Dashboard = () => {
               );
             })()}
           </Paper>
-        </Grid>
+        </Box>
+      </Stack>
 
-        {/* Recent Interviews */}
-        <Grid item xs={12}>
-          <Paper className="glass-card" sx={{ p: 4 }}>
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>Recent Interviews</Typography>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Company</TableCell>
-                    <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Topics</TableCell>
-                    <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Score</TableCell>
-                    <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Status</TableCell>
-                    <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }} align="right">Action</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                        <CircularProgress size={24} />
-                      </TableCell>
-                    </TableRow>
-                  ) : interviews.length > 0 ? (
-                    interviews.map((interview) => (
-                      <InterviewRow 
-                        key={interview._id}
-                        id={interview._id}
-                        company={interview.companyName} 
-                        topics={interview.topics?.join(', ') || 'N/A'} 
-                        score={interview.score ? `${interview.score}%` : '--'} 
-                        status={interview.status} 
-                      />
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#94a3b8' }}>
-                        No interviews found. Start your first mock interview!
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
-      </Grid>
+      {/* Row 2: Recent Interviews full width */}
+      <Paper className="glass-card" sx={{ p: 4, width: '100%' }}>
+        <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>Recent Interviews</Typography>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Company</TableCell>
+                <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Topics</TableCell>
+                <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Score</TableCell>
+                <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Status</TableCell>
+                <TableCell sx={{ color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.05)' }} align="right">Action</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                    <CircularProgress size={24} />
+                  </TableCell>
+                </TableRow>
+              ) : interviews.length > 0 ? (
+                interviews.map((interview) => (
+                  <InterviewRow
+                    key={interview._id}
+                    id={interview._id}
+                    company={interview.companyName}
+                    topics={interview.topics?.join(', ') || 'N/A'}
+                    score={interview.score ? `${interview.score}%` : '--'}
+                    status={interview.status}
+                  />
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#94a3b8' }}>
+                    No interviews found. Start your first mock interview!
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     </Container>
   );
 };
 
 const StatCard = ({ icon, label, value }) => (
-  <Grid item xs={12} sm={6} md={3}>
-    <Paper className="glass-card" sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-      <Box sx={{ p: 1.5, borderRadius: '12px', background: 'rgba(255,255,255,0.03)' }}>
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="body2" sx={{ color: '#94a3b8' }}>{label}</Typography>
-        <Typography variant="h6" sx={{ fontWeight: 800 }}>{value}</Typography>
-      </Box>
-    </Paper>
-  </Grid>
+  <Paper className="glass-card" sx={{ p: 3, flex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Box sx={{ p: 1.5, borderRadius: '12px', background: 'rgba(255,255,255,0.03)' }}>
+      {icon}
+    </Box>
+    <Box>
+      <Typography variant="body2" sx={{ color: '#94a3b8' }}>{label}</Typography>
+      <Typography variant="h6" sx={{ fontWeight: 800 }}>{value}</Typography>
+    </Box>
+  </Paper>
 );
 
 const SkillMetric = ({ label, value, color }) => (
