@@ -3,7 +3,7 @@ import {
   Box, Typography, Paper, TextField, Button,
   IconButton, Avatar, CircularProgress, Divider, Container
 } from '@mui/material';
-import { Send, Mic, MicOff, PhoneOff, Bot, MessageSquare, Code } from 'lucide-react';
+import { Send, Mic, MicOff, Bot, MessageSquare, Code, ChevronLeft } from 'lucide-react';
 import Editor from '@monaco-editor/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
@@ -272,43 +272,6 @@ const LiveInterview = () => {
     setConsoleOutput('Code submitted. Awaiting feedback...');
   }, [code, handleSend]);
 
-  /* ── end interview ─────────────────────────────────────────────── */
-  const handleEnd = useCallback(async () => {
-    if (!window.confirm('Are you sure you want to end this interview?')) return;
-
-    // Stop everything immediately
-    window.speechSynthesis?.cancel();
-    shouldRecordRef.current = false;
-    try { recognitionRef.current?.stop(); } catch (_) {}
-    setIsRecording(false);
-
-    // Show typing indicator while AI generates the report
-    setIsTyping(true);
-
-    try {
-      const res = await api.post(`/interviews/${id}/end`);
-      const reportData = res.data.report || res.data.data?.analysis;
-      setReport(reportData);
-      setIsEnded(true);
-    } catch (err) {
-      console.error('endInterview error:', err);
-      // Never crash — show a fallback report
-      setReport({
-        overallScore: 0,
-        communicationScore: 0,
-        problemSolvingScore: 0,
-        technicalScore: 0,
-        strongAreas: [],
-        weakAreas: ['Interview ended unexpectedly — please try again.'],
-        improvementPlan: ['Restart the interview and try again.'],
-        recommendation: 'Not Ready',
-        subjectBreakdown: [],
-      });
-      setIsEnded(true);
-    } finally {
-      setIsTyping(false);
-    }
-  }, [id]);
 
   /* ────────────────────────── REPORT VIEW ────────────────────────── */
   // IMPORTANT: check isEnded BEFORE loading so the report is never hidden by a spinner
@@ -507,13 +470,12 @@ const LiveInterview = () => {
         <Box sx={{ flexGrow: 1 }} />
 
         <Button
-          variant="contained"
-          color="error"
-          startIcon={<PhoneOff size={16} />}
-          sx={{ py: 1.5, borderRadius: '12px', fontWeight: 700 }}
-          onClick={handleEnd}
+          variant="outlined"
+          startIcon={<ChevronLeft size={16} />}
+          sx={{ py: 1.5, borderRadius: '12px', fontWeight: 700, borderColor: 'rgba(255,255,255,0.12)', color: '#94a3b8', '&:hover': { borderColor: '#fff', color: '#fff' } }}
+          onClick={() => navigate(-1)}
         >
-          End Interview
+          Back
         </Button>
       </Box>
 

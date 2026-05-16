@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Container, Box, Typography, TextField, Button, Paper, Grid, MenuItem, FormControlLabel, Switch, Chip, Autocomplete } from '@mui/material';
+import {
+  Container, Box, Typography, TextField, Button, Paper,
+  MenuItem, FormControlLabel, Switch, Chip, Autocomplete, Stack, Tooltip
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Play, Settings2, Info } from 'lucide-react';
-
+import { Play, Settings2, Info, Lock } from 'lucide-react';
 import api from '../api/axios';
 import { CircularProgress } from '@mui/material';
 
-const subjects = [
-  'React', 'JavaScript', 'Node.js', 'MongoDB', 'Express', 'HTML/CSS', 
-  'DSA', 'System Design', 'Python', 'Java', 'TypeScript', 'SQL'
+const PRESET_TOPICS = [
+  'React', 'JavaScript', 'Node.js', 'MongoDB', 'Express', 'HTML/CSS',
+  'DSA', 'System Design', 'Python', 'Java', 'TypeScript', 'SQL',
+  'Next.js', 'Redux', 'REST API', 'GraphQL', 'Docker', 'AWS',
 ];
 
 const InterviewSetup = () => {
@@ -19,18 +22,21 @@ const InterviewSetup = () => {
     experienceLevel: 'Beginner',
     duration: 30,
     includeCoding: true,
-    voiceInterview: false
+    voiceInterview: false,
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.topics.length === 0) {
+      alert('Please select at least one topic.');
+      return;
+    }
     setLoading(true);
     try {
       const response = await api.post('/interviews', formData);
-      const interviewId = response.data.data._id;
-      navigate(`/interview/${interviewId}`);
+      navigate(`/interview/${response.data.data._id}`);
     } catch (error) {
       console.error('Error creating interview:', error);
       alert('Failed to start interview. Please check your AI API keys.');
@@ -40,7 +46,7 @@ const InterviewSetup = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ mt: 8, mb: 10 }}>
+    <Container maxWidth="md" sx={{ mt: 12, mb: 10 }}>
       <Box sx={{ mb: 6, textAlign: 'center' }}>
         <Typography variant="h3" sx={{ fontWeight: 800, fontFamily: 'Outfit', mb: 2 }}>
           Setup Your Interview
@@ -50,10 +56,12 @@ const InterviewSetup = () => {
         </Typography>
       </Box>
 
-      <Paper className="glass-card" sx={{ p: 5 }}>
+      <Paper className="glass-card" sx={{ p: { xs: 3, md: 5 }, borderRadius: '24px' }}>
         <form onSubmit={handleSubmit}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
+          <Stack spacing={3}>
+
+            {/* Row 1: Name + Company */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
               <TextField
                 fullWidth
                 label="Candidate Name"
@@ -62,33 +70,45 @@ const InterviewSetup = () => {
                 required
                 placeholder="e.g. John Doe"
               />
-            </Grid>
-            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Target Company"
                 value={formData.companyName}
                 onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                 required
-                placeholder="e.g. Google, Meta, or Startup"
+                placeholder="e.g. Google, Meta, Startup"
               />
-            </Grid>
+            </Stack>
 
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={subjects}
-                value={formData.topics}
-                onChange={(event, newValue) => {
-                  setFormData({ ...formData, topics: newValue });
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label="Topics / Subjects" placeholder="Select topics" />
-                )}
-              />
-            </Grid>
+            {/* Topics — full width, supports custom entries */}
+            <Autocomplete
+              multiple
+              freeSolo
+              options={PRESET_TOPICS}
+              value={formData.topics}
+              onChange={(_, newValue) => setFormData({ ...formData, topics: newValue })}
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    key={index}
+                    label={option}
+                    {...getTagProps({ index })}
+                    sx={{ bgcolor: 'rgba(99,102,241,0.15)', color: '#a5b4fc', fontWeight: 600 }}
+                  />
+                ))
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Topics / Subjects"
+                  placeholder="Select or type a custom topic, then press Enter"
+                  helperText="Pick from the list or type any custom topic and press Enter to add it"
+                />
+              )}
+            />
 
-            <Grid item xs={12} md={6}>
+            {/* Row 2: Experience + Duration */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
               <TextField
                 select
                 fullWidth
@@ -100,9 +120,6 @@ const InterviewSetup = () => {
                 <MenuItem value="Intermediate">Intermediate</MenuItem>
                 <MenuItem value="Advanced">Advanced</MenuItem>
               </TextField>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
               <TextField
                 select
                 fullWidth
@@ -114,53 +131,85 @@ const InterviewSetup = () => {
                 <MenuItem value={30}>30 Minutes (Standard)</MenuItem>
                 <MenuItem value={60}>60 Minutes (Full)</MenuItem>
               </TextField>
-            </Grid>
+            </Stack>
 
-            <Grid item xs={12}>
-              <Box sx={{ p: 3, borderRadius: '12px', bgcolor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Settings2 size={18} /> Interview Options
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <FormControlLabel
-                      control={<Switch checked={formData.includeCoding} onChange={(e) => setFormData({ ...formData, includeCoding: e.target.checked })} color="primary" />}
-                      label="Include Coding Round"
+            {/* Interview Options */}
+            <Box sx={{
+              p: 3, borderRadius: '16px',
+              bgcolor: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.07)'
+            }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Settings2 size={18} /> Interview Options
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.includeCoding}
+                      onChange={(e) => setFormData({ ...formData, includeCoding: e.target.checked })}
+                      color="primary"
                     />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
+                  }
+                  label="Include Coding Round"
+                />
+                <Tooltip title="Coming Soon" arrow placement="top">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <FormControlLabel
-                      control={<Switch checked={formData.voiceInterview} onChange={(e) => setFormData({ ...formData, voiceInterview: e.target.checked })} color="primary" />}
-                      label="Enable Voice Interview (Beta)"
+                      control={
+                        <Switch
+                          checked={false}
+                          disabled
+                          color="primary"
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          Enable Voice Interview
+                          <Box sx={{
+                            display: 'inline-flex', alignItems: 'center', gap: 0.5,
+                            px: 1, py: 0.2, borderRadius: '6px',
+                            bgcolor: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)',
+                            color: '#f59e0b', fontSize: '0.65rem', fontWeight: 700
+                          }}>
+                            <Lock size={10} /> COMING SOON
+                          </Box>
+                        </Box>
+                      }
                     />
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
+                  </Box>
+                </Tooltip>
+              </Stack>
+            </Box>
 
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#94a3b8', fontSize: '0.875rem', mb: 3 }}>
-                <Info size={16} />
-                <Typography variant="caption">The AI will generate questions based on these settings.</Typography>
+            {/* Submit */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#64748b', mb: 2 }}>
+                <Info size={15} />
+                <Typography variant="caption">The AI will generate adaptive questions based on your settings.</Typography>
               </Box>
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
                 size="large"
-                startIcon={loading ? null : <Play />}
+                startIcon={loading ? null : <Play size={20} />}
                 disabled={loading}
-                sx={{ 
+                sx={{
                   py: 2,
+                  borderRadius: '14px',
                   background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                   fontWeight: 700,
-                  fontSize: '1.1rem'
+                  fontSize: '1.1rem',
+                  boxShadow: '0 10px 30px -5px rgba(99,102,241,0.4)',
+                  '&:hover': { transform: 'scale(1.01)' },
                 }}
               >
                 {loading ? <CircularProgress size={24} color="inherit" /> : 'Start Mock Interview'}
               </Button>
-            </Grid>
-          </Grid>
+            </Box>
+
+          </Stack>
         </form>
       </Paper>
     </Container>

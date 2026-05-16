@@ -1,12 +1,19 @@
 import React from 'react';
 import { Container, Typography, Button, Box, Card, CardContent, Avatar } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Sparkles, Terminal, Mic, BarChart3, ShieldCheck, Zap,
   CheckCircle, ArrowRight, Star, Users, Trophy, Clock
 } from 'lucide-react';
+import useAuthStore from '../store/useAuthStore';
 
 const LandingPage = () => {
+  const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleCTA = () => navigate(user ? '/dashboard' : '/signup');
+  const handleSignIn = () => navigate(user ? '/dashboard' : '/login');
+
   return (
     <Box sx={{ minHeight: '100vh', pt: 8, pb: 0 }}>
 
@@ -44,8 +51,7 @@ const LandingPage = () => {
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
             <Button
-              component={RouterLink}
-              to="/signup"
+              onClick={handleCTA}
               variant="contained"
               size="large"
               endIcon={<ArrowRight size={18} />}
@@ -55,16 +61,15 @@ const LandingPage = () => {
                 boxShadow: '0 10px 25px -5px rgba(99,102,241,0.4)'
               }}
             >
-              Get Started for Free
+              {user ? 'Go to Dashboard' : 'Get Started for Free'}
             </Button>
             <Button
-              component={RouterLink}
-              to="/login"
+              onClick={handleSignIn}
               variant="outlined"
               size="large"
               sx={{ px: 6, py: 2, fontSize: '1.1rem', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
             >
-              Sign In
+              {user ? 'Dashboard' : 'Sign In'}
             </Button>
           </Box>
 
@@ -242,8 +247,7 @@ const LandingPage = () => {
               Join thousands of developers who used TechBuddy to crack interviews at top tech companies.
             </Typography>
             <Button
-              component={RouterLink}
-              to="/signup"
+              onClick={handleCTA}
               variant="contained"
               size="large"
               endIcon={<ArrowRight size={20} />}
@@ -254,7 +258,7 @@ const LandingPage = () => {
                 '&:hover': { transform: 'scale(1.03)' }
               }}
             >
-              Start Practicing for Free
+              {user ? 'Go to Dashboard' : 'Start Practicing for Free'}
             </Button>
           </Box>
         </Container>
