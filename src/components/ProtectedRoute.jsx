@@ -1,15 +1,19 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import useAuthStore from '../store/useAuthStore';
+import { Navigate, useLocation } from 'react-router-dom';
+import useAuthStore from '@/store/useAuthStore';
 
-const ProtectedRoute = ({ children }) => {
-  const { token } = useAuthStore();
-
+/** Redirects to /login (remembering where the user was going) when there is no session. */
+export default function ProtectedRoute({ children }) {
+  const { token, sessionExpired } = useAuthStore();
+  const location = useLocation();
   if (!token) {
-    return <Navigate to="/login" replace />;
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${next}${sessionExpired ? '&expired=1' : ''}`} replace />;
   }
-
   return children;
-};
+}
 
-export default ProtectedRoute;
+/** For /login and /signup: signed-in users go straight to the dashboard. */
+export function GuestRoute({ children }) {
+  const { token } = useAuthStore();
+  return token ? <Navigate to="/dashboard" replace /> : children;
+}

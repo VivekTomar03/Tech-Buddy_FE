@@ -1,335 +1,252 @@
-import React from 'react';
-import { Container, Typography, Button, Box, Card, CardContent, Avatar } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import {
-  Sparkles, Terminal, Mic, BarChart3, ShieldCheck, Zap,
-  CheckCircle, ArrowRight, Star, Users, Trophy, Clock
-} from 'lucide-react';
-import useAuthStore from '../store/useAuthStore';
+import { ArrowRight, CheckCircle2, ChevronDown, Code2, KeyRound, Mic, Gauge, MessagesSquare, TrendingUp, XCircle } from 'lucide-react';
+import useAuthStore from '@/store/useAuthStore';
+import Button from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Controls';
+import { SeverityMeter } from '@/components/ui/Score';
+import { LogoMark } from '@/components/layout/Logo';
+import Logo from '@/components/layout/Logo';
 
-const LandingPage = () => {
+/* ─────────────── hero preview: the actual interview UI, composed statically ─────────────── */
+
+function PreviewMessage({ meta, children }) {
+  return (
+    <div className="flex gap-2.5">
+      <LogoMark className="mt-0.5 size-6 shrink-0" />
+      <div className="min-w-0">
+        <p className="label-mono mb-0.5 text-[10px] normal-case">{meta}</p>
+        <p className="text-[13px] leading-relaxed">{children}</p>
+      </div>
+    </div>
+  );
+}
+
+function HeroPreview() {
+  return (
+    <div
+      role="img"
+      aria-label="Preview of an interview: the interviewer asks about React keys, follows up on the candidate's answer, and a coding problem shows 5 of 6 tests passing."
+      className="overflow-hidden rounded-xl border border-line bg-surface shadow-[0_24px_60px_-30px_rgb(0_0_0/0.45)]"
+    >
+      <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
+        <span className="text-[13px] font-semibold">Razorpay</span>
+        <span className="truncate text-xs text-subtle">React · JavaScript · DSA</span>
+        <span className="ml-auto rounded-md border border-line px-1.5 py-0.5 font-mono text-[11px] text-muted">23:41</span>
+      </div>
+      <div className="grid sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <div className="space-y-4 p-4">
+          <PreviewMessage meta="react · easy">Why do list items in React need a key prop?</PreviewMessage>
+          <div className="ml-auto max-w-[85%] rounded-lg bg-surface-3 px-3 py-2 text-[13px] leading-relaxed">So React knows which items changed between renders.</div>
+          <PreviewMessage meta="react · follow-up">Right. What breaks if you use the array index as the key and then sort the list?</PreviewMessage>
+          <div className="flex items-center gap-1.5 font-mono text-xs text-subtle">
+            you're typing<span className="inline-block h-3.5 w-1.5 animate-blink bg-subtle" />
+          </div>
+        </div>
+        <div className="border-t border-line bg-surface-2/60 sm:border-t-0 sm:border-l">
+          <div className="flex items-center gap-2 border-b border-line px-3 py-2">
+            <Code2 className="size-3.5 text-subtle" aria-hidden="true" />
+            <span className="text-xs font-medium">Two Sum</span>
+            <Badge tone="accent">easy</Badge>
+            <span className="ml-auto font-mono text-[10px] text-subtle">python</span>
+          </div>
+          <pre className="overflow-hidden px-3 py-2.5 font-mono text-[11.5px] leading-relaxed text-muted">
+            <span className="text-info">def</span> <span className="text-fg">two_sum</span>(nums, target):{'\n'}
+            {'    '}seen = {'{}'}{'\n'}
+            {'    '}<span className="text-info">for</span> i, n <span className="text-info">in</span> enumerate(nums):{'\n'}
+            {'        '}<span className="text-info">if</span> target - n <span className="text-info">in</span> seen:{'\n'}
+            {'            '}<span className="text-info">return</span> [seen[target - n], i]{'\n'}
+            {'        '}seen[n] = i
+          </pre>
+          <div className="border-t border-line px-3 py-2 font-mono text-[11px]">
+            <p className="mb-1 flex items-center gap-1.5 font-sans text-xs font-semibold">
+              <XCircle className="size-3.5 text-warn" aria-hidden="true" /> 5/6 passed
+            </p>
+            <p className="text-subtle">
+              <span className="text-accent-text">pass</span> ([2,7,11,15], 9)
+            </p>
+            <p className="text-subtle">
+              <span className="text-danger">fail</span> ([3,3], 6) expected [0,1]
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── content ─────────────── */
+
+const STEPS = [
+  { n: '01', title: 'It plans the interview', body: 'Pick a company, your level and up to six topics. The interviewer drafts questions at three difficulty levels and books time for a coding round.' },
+  { n: '02', title: 'It asks — and follows up', body: 'One question at a time. Vague answers get “how does that work?”. Wrong ones get a simpler angle. Two follow-ups at most, then it moves on.' },
+  { n: '03', title: 'You code against real tests', body: 'Coding problems open an editor. Your solution runs against the examples and hidden test cases right in your browser.' },
+  { n: '04', title: 'You get an honest report', body: 'Each answer is scored 0–10 with a note. The report is calculated from those scores and your test results — nothing is filled in.' },
+];
+
+const FEATURES = [
+  { icon: MessagesSquare, title: 'Follow-ups that dig', body: 'The interviewer reads your answer and probes the gaps — the part of a real interview a question bank can’t simulate.' },
+  { icon: TrendingUp, title: 'Difficulty that moves with you', body: 'Each topic starts easy (medium if you’re advanced). Strong answers step you up, a rough patch steps you down.' },
+  { icon: Code2, title: 'Code that actually runs', body: 'JavaScript, TypeScript and Python run against test cases in your browser. Java and C++ are reviewed by the interviewer.' },
+  { icon: Mic, title: 'Voice, if you want it', body: 'Have questions read aloud and dictate your answers, to practise saying it — not just typing it. Chrome and Edge.' },
+  { icon: Gauge, title: 'Scores you can trust', body: 'If the AI is unavailable, you’re told to retry. It never invents a question or a score to fill the gap.' },
+  { icon: KeyRound, title: 'Free, with your own key if you like', body: 'Use the shared keys with a daily limit, or add your own free Groq or Gemini key in Settings for unlimited practice.' },
+];
+
+const FAQ = [
+  { q: 'Is it free?', a: 'Yes. Interviews on the shared AI keys are limited per day. Adding your own free Groq or Gemini API key in Settings removes the limit.' },
+  { q: 'Is my code sent to a server to run?', a: 'No. JavaScript, TypeScript and Python run inside your browser in an isolated worker. Only the code and the test results are sent to the interviewer for review.' },
+  { q: 'Where do the scores come from?', a: 'The AI scores each answer from 0 to 10 and writes a short note. The report numbers are weighted averages of those scores (harder questions count more) plus your real test results.' },
+  { q: 'Which browsers support voice?', a: 'Speech input works in Chrome and Edge. Everything else works in any modern browser.' },
+  { q: 'Can I stop halfway?', a: 'Yes. End the interview any time; the report covers what you answered and shows how much of the plan was covered.' },
+];
+
+export default function LandingPage() {
   const { user } = useAuthStore();
-  const navigate = useNavigate();
-
-  const handleCTA = () => navigate(user ? '/dashboard' : '/signup');
-  const handleSignIn = () => navigate(user ? '/dashboard' : '/login');
+  const primary = user ? { to: '/setup', label: 'Start an interview' } : { to: '/signup', label: 'Start practising — free' };
 
   return (
-    <Box sx={{ minHeight: '100vh', pt: 8, pb: 0 }}>
-
-      {/* ── Hero ── */}
-      <Container maxWidth="lg">
-        <Box sx={{ textAlign: 'center', mb: 10 }}>
-          <Box sx={{
-            display: 'inline-block', px: 2.5, py: 0.8, mb: 3,
-            borderRadius: '999px', border: '1px solid rgba(99,102,241,0.4)',
-            bgcolor: 'rgba(99,102,241,0.08)'
-          }}>
-            <Typography variant="caption" sx={{ color: '#a5b4fc', fontWeight: 700, letterSpacing: 1 }}>
-              AI-POWERED MOCK INTERVIEWS
-            </Typography>
-          </Box>
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: '3rem', md: '5rem' },
-              fontWeight: 800,
-              mb: 3,
-              background: 'linear-gradient(to right, #fff, #94a3b8)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Master Your Next <br /> Tech Interview with AI
-          </Typography>
-          <Typography
-            variant="h5"
-            sx={{ color: '#94a3b8', mb: 5, maxWidth: '700px', mx: 'auto', lineHeight: 1.7 }}
-          >
-            Experience realistic mock interviews with dynamic AI interviewers.
-            Get real-time feedback, coding challenges, and detailed performance analysis.
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
-            <Button
-              onClick={handleCTA}
-              variant="contained"
-              size="large"
-              endIcon={<ArrowRight size={18} />}
-              sx={{
-                px: 6, py: 2, fontSize: '1.1rem',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                boxShadow: '0 10px 25px -5px rgba(99,102,241,0.4)'
-              }}
-            >
-              {user ? 'Go to Dashboard' : 'Get Started for Free'}
+    <div>
+      {/* Hero */}
+      <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-4 pt-12 pb-16 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-12 lg:pt-20 lg:pb-24">
+        <div>
+          <p className="label-mono">Mock technical interviews</p>
+          <h1 className="mt-4 text-[34px] leading-[1.08] font-semibold tracking-[-0.025em] sm:text-5xl xl:text-[54px]">
+            Practise the interview,
+            <br />
+            not the quiz.
+          </h1>
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-[17px]">
+            An AI interviewer that plans questions for your topics, follows up when your answer is vague, runs your code against real test cases, and scores you from what you
+            actually said.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Button to={primary.to} size="lg">
+              {primary.label} <ArrowRight className="size-4" />
             </Button>
-            <Button
-              onClick={handleSignIn}
-              variant="outlined"
-              size="large"
-              sx={{ px: 6, py: 2, fontSize: '1.1rem', borderColor: 'rgba(255,255,255,0.2)', color: '#fff' }}
-            >
-              {user ? 'Dashboard' : 'Sign In'}
-            </Button>
-          </Box>
-
-          {/* Stats row */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 4, md: 8 }, flexWrap: 'wrap', mt: 8, opacity: 0.8 }}>
-            {[
-              { icon: <Users size={18} />, value: '10,000+', label: 'Developers' },
-              { icon: <Star size={18} />, value: '4.9/5', label: 'Rating' },
-              { icon: <Trophy size={18} />, value: '87%', label: 'Offer Rate' },
-              { icon: <Clock size={18} />, value: '<2s', label: 'Response Time' },
-            ].map((s) => (
-              <Box key={s.label} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#6366f1' }}>{s.icon}
-                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#fff' }}>{s.value}</Typography>
-                </Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>{s.label}</Typography>
-              </Box>
+            <a href="#how" className="inline-flex h-12 items-center justify-center rounded-lg border border-line px-5 text-[15px] text-fg hover:bg-surface-2">
+              How it works
+            </a>
+          </div>
+          <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
+            {['No credit card', 'Code runs in your browser', 'Ends on time'].map((t) => (
+              <li key={t} className="inline-flex items-center gap-1.5">
+                <CheckCircle2 className="size-4 text-accent-text" aria-hidden="true" /> {t}
+              </li>
             ))}
-          </Box>
-        </Box>
+          </ul>
+        </div>
+        <HeroPreview />
+      </section>
 
-        {/* ── Features ── */}
-        <Box sx={{ mb: 5 }}>
-          <Box sx={{ textAlign: 'center', mb: 6 }}>
-            <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, fontFamily: 'Outfit' }}>Everything You Need to Get Hired</Typography>
-            <Typography sx={{ color: '#94a3b8', maxWidth: 500, mx: 'auto' }}>
-              A complete interview preparation platform built for serious candidates.
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            <FeatureCard icon={<Sparkles color="#6366f1" size={32} />} title="Dynamic AI Interviewer"
-              description="Our AI adapts its questions based on your performance, just like a real human interviewer." />
-            <FeatureCard icon={<Terminal color="#ec4899" size={32} />} title="Live Coding Rounds"
-              description="Solve data structure and algorithm problems in our integrated Monaco editor with real-time evaluation." />
-            <FeatureCard icon={<Mic color="#8b5cf6" size={32} />} title="Voice Interviews"
-              description="Practice your verbal communication skills with our speech-to-text and AI voice interaction." />
-            <FeatureCard icon={<BarChart3 color="#06b6d4" size={32} />} title="In-depth Analysis"
-              description="Receive detailed reports on your technical knowledge, communication, and hiring readiness." />
-            <FeatureCard icon={<ShieldCheck color="#10b981" size={32} />} title="Company Specific"
-              description="Mock interviews tailored for specific companies like Google, Meta, or high-growth startups." />
-            <FeatureCard icon={<Zap color="#f59e0b" size={32} />} title="Instant Feedback"
-              description="Don't wait for days. Get actionable improvement suggestions immediately after your session." />
-          </Box>
-        </Box>
-      </Container>
-
-      {/* ── How It Works ── */}
-      <Box sx={{ py: 15, bgcolor: 'rgba(15,23,42,0.6)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, fontFamily: 'Outfit' }}>How It Works</Typography>
-            <Typography sx={{ color: '#94a3b8', maxWidth: 500, mx: 'auto' }}>
-              Go from signup to a full mock interview in under 2 minutes.
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, position: 'relative' }}>
-            {[
-              { step: '01', title: 'Create Your Profile', desc: 'Sign up and tell us your target role, experience level, and which companies you are preparing for.', color: '#6366f1' },
-              { step: '02', title: 'Set Up the Interview', desc: 'Choose topics, difficulty, and interview type — technical, behavioural, or a full mock round.', color: '#8b5cf6' },
-              { step: '03', title: 'Interview with AI', desc: 'Answer questions via voice or text. The AI adapts in real time and opens a coding editor when needed.', color: '#a855f7' },
-              { step: '04', title: 'Get Your Report', desc: 'Receive a detailed performance report with scores, strengths, weak areas, and a personalised roadmap.', color: '#ec4899' },
-            ].map((s, i) => (
-              <Box key={i} sx={{ flex: 1, position: 'relative' }}>
-                <Box sx={{
-                  p: 4, borderRadius: '20px',
-                  bgcolor: 'rgba(30,41,59,0.5)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  height: '100%'
-                }}>
-                  <Typography sx={{ fontSize: '3rem', fontWeight: 900, color: s.color, opacity: 0.25, lineHeight: 1, mb: 2, fontFamily: 'Outfit' }}>
-                    {s.step}
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 800, mb: 1.5 }}>{s.title}</Typography>
-                  <Typography sx={{ color: '#94a3b8', lineHeight: 1.7 }}>{s.desc}</Typography>
-                </Box>
-                {i < 3 && (
-                  <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', top: '50%', right: -20, transform: 'translateY(-50%)', zIndex: 1, color: '#334155' }}>
-                    <ArrowRight size={24} />
-                  </Box>
-                )}
-              </Box>
+      {/* How it works */}
+      <section id="how" className="scroll-mt-16 border-y border-line bg-surface">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+          <p className="label-mono">How an interview runs</p>
+          <h2 className="mt-3 max-w-2xl text-2xl font-semibold sm:text-3xl">The structure of a real interview, run by the server — not left to chance.</h2>
+          <ol className="mt-10 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+            {STEPS.map((s) => (
+              <li key={s.n} className="bg-surface p-5 sm:p-6">
+                <span className="font-mono text-sm text-accent-text">{s.n}</span>
+                <h3 className="mt-3 text-[17px] font-semibold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted">{s.body}</p>
+              </li>
             ))}
-          </Box>
-        </Container>
-      </Box>
+          </ol>
+        </div>
+      </section>
 
-      {/* ── Testimonials ── */}
-      <Box sx={{ py: 15 }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 10 }}>
-            <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, fontFamily: 'Outfit' }}>What Developers Say</Typography>
-            <Typography sx={{ color: '#94a3b8' }}>Real results from real candidates.</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {[
-              { name: 'Aditya Sharma', role: 'SDE-2 at Amazon', text: 'TechBuddy helped me go from failing phone screens to clearing all 4 rounds at Amazon. The AI interviewer felt surprisingly real.', rating: 5 },
-              { name: 'Priya Mehta', role: 'Frontend Engineer at Google', text: 'The coding rounds with Monaco editor are excellent. I could practise DSA in the exact same environment as the real interview.', rating: 5 },
-              { name: 'Rahul Verma', role: 'Backend Dev at Razorpay', text: 'The detailed report after each session was a game changer. I knew exactly what to improve before my next round.', rating: 5 },
-              { name: 'Sneha Patil', role: 'Full Stack at Swiggy', text: 'I loved the voice interview feature. Speaking answers aloud instead of just typing made a huge difference to my confidence.', rating: 5 },
-            ].map((t, i) => (
-              <Box key={i} sx={{ width: { xs: '100%', md: 'calc(50% - 16px)' } }}>
-                <Card sx={{
-                  height: '100%', p: 1,
-                  background: 'rgba(30,41,59,0.4)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  borderRadius: '20px'
-                }}>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', gap: 0.5, mb: 3 }}>
-                      {Array.from({ length: t.rating }).map((_, j) => (
-                        <Star key={j} size={16} fill="#f59e0b" color="#f59e0b" />
-                      ))}
-                    </Box>
-                    <Typography sx={{ color: '#cbd5e1', lineHeight: 1.8, mb: 4, fontStyle: 'italic' }}>
-                      "{t.text}"
-                    </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Avatar sx={{ bgcolor: '#6366f1', width: 44, height: 44, fontWeight: 800 }}>
-                        {t.name[0]}
-                      </Avatar>
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{t.name}</Typography>
-                        <Typography variant="caption" sx={{ color: '#6366f1', fontWeight: 600 }}>{t.role}</Typography>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Box>
+      {/* Features */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-16">
+          <div>
+            <p className="label-mono">What's different</p>
+            <h2 className="mt-3 text-2xl font-semibold sm:text-3xl">Built around the moments that decide interviews.</h2>
+            <p className="mt-4 text-muted">Most practice tools check whether you know an answer. Interviews test whether you can explain it, defend it, and code it under a clock.</p>
+          </div>
+          <ul className="grid gap-x-8 gap-y-8 sm:grid-cols-2">
+            {FEATURES.map((f) => (
+              <li key={f.title}>
+                <f.icon className="size-5 text-accent-text" aria-hidden="true" />
+                <h3 className="mt-3 font-semibold">{f.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted">{f.body}</p>
+              </li>
             ))}
-          </Box>
-        </Container>
-      </Box>
+          </ul>
+        </div>
+      </section>
 
-      {/* ── What's Included ── */}
-      <Box sx={{ py: 15, bgcolor: 'rgba(15,23,42,0.6)', borderTop: '1px solid rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-        <Container maxWidth="md">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, fontFamily: 'Outfit' }}>Everything Included, Free to Start</Typography>
-            <Typography sx={{ color: '#94a3b8' }}>No credit card required. No hidden fees.</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
-            {[
-              'Unlimited mock interviews', 'Voice & text input', 'Live Monaco code editor',
-              'DSA & system design rounds', 'AI-generated performance reports', 'Company-specific preparation',
-              'Adaptive difficulty', 'Behavioural interview practice', 'Detailed improvement roadmap',
-              'Interview history dashboard',
-            ].map((item) => (
-              <Box key={item} sx={{
-                display: 'flex', alignItems: 'center', gap: 1.5,
-                px: 3, py: 1.5, borderRadius: '12px',
-                bgcolor: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)'
-              }}>
-                <CheckCircle size={16} color="#10b981" />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>{item}</Typography>
-              </Box>
-            ))}
-          </Box>
-        </Container>
-      </Box>
+      {/* Example report */}
+      <section className="border-y border-line bg-surface">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 sm:py-20 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <p className="label-mono">At the end</p>
+            <h2 className="mt-3 text-2xl font-semibold sm:text-3xl">A report that tells you what to fix next.</h2>
+            <p className="mt-4 text-muted">
+              Scores by subject, your coding results, the specific concepts you got right and wrong, and a short plan. Every question is listed with its score and the interviewer’s
+              note.
+            </p>
+          </div>
+          <div className="rounded-xl border border-line bg-bg p-5 sm:p-6">
+            <div className="flex items-center justify-between">
+              <p className="label-mono">Example report</p>
+              <Badge tone="accent">Startup Ready</Badge>
+            </div>
+            <div className="mt-4 flex items-end gap-2">
+              <p className="text-5xl leading-none font-semibold tracking-tight">64</p>
+              <p className="pb-1 text-sm text-subtle">/ 100 · based on 100% of the plan</p>
+            </div>
+            <div className="mt-6 space-y-4">
+              <SeverityMeter label="React" score={78} />
+              <SeverityMeter label="JavaScript" score={61} />
+              <SeverityMeter label="DSA" score={42} />
+            </div>
+            <div className="mt-6 space-y-2 border-t border-line pt-4 text-sm">
+              <p className="flex gap-2">
+                <XCircle className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden="true" /> Missed the duplicate-values edge case in Two Sum.
+              </p>
+              <p className="flex gap-2">
+                <ArrowRight className="mt-0.5 size-4 shrink-0 text-info" aria-hidden="true" /> Before submitting, test empty input, duplicates and negatives.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      {/* ── CTA Banner ── */}
-      <Box sx={{ py: 15 }}>
-        <Container maxWidth="md">
-          <Box sx={{
-            textAlign: 'center', p: { xs: 6, md: 10 },
-            borderRadius: '32px',
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))',
-            border: '1px solid rgba(99,102,241,0.2)',
-            boxShadow: '0 0 80px -20px rgba(99,102,241,0.3)'
-          }}>
-            <Typography variant="h3" sx={{ fontWeight: 900, mb: 2, fontFamily: 'Outfit' }}>
-              Ready to Land Your Dream Job?
-            </Typography>
-            <Typography sx={{ color: '#94a3b8', mb: 6, fontSize: '1.1rem', maxWidth: 480, mx: 'auto' }}>
-              Join thousands of developers who used TechBuddy to crack interviews at top tech companies.
-            </Typography>
-            <Button
-              onClick={handleCTA}
-              variant="contained"
-              size="large"
-              endIcon={<ArrowRight size={20} />}
-              sx={{
-                px: 8, py: 2.5, fontSize: '1.1rem', borderRadius: '14px',
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                boxShadow: '0 15px 35px -5px rgba(99,102,241,0.5)',
-                '&:hover': { transform: 'scale(1.03)' }
-              }}
-            >
-              {user ? 'Go to Dashboard' : 'Start Practicing for Free'}
-            </Button>
-          </Box>
-        </Container>
-      </Box>
+      {/* FAQ */}
+      <section className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20">
+        <p className="label-mono">Questions</p>
+        <h2 className="mt-3 text-2xl font-semibold sm:text-3xl">Before you start</h2>
+        <div className="mt-8 divide-y divide-line border-y border-line">
+          {FAQ.map((f) => (
+            <details key={f.q} className="group">
+              <summary className="flex items-center justify-between gap-4 py-4 text-[15px] font-medium [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <ChevronDown className="size-4 shrink-0 text-subtle transition-transform duration-150 group-open:rotate-180" aria-hidden="true" />
+              </summary>
+              <p className="pb-4 text-sm leading-relaxed text-muted">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
 
-      {/* ── Trusted By ── */}
-      <Box sx={{ py: 8, borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', opacity: 0.5 }}>
-            <Typography variant="body2" sx={{ mb: 4, textTransform: 'uppercase', letterSpacing: '2px', color: '#64748b' }}>
-              Trusted by developers from
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 4, md: 8 }, flexWrap: 'wrap' }}>
-              {['GOOGLE', 'META', 'AMAZON', 'MICROSOFT', 'NETFLIX', 'RAZORPAY'].map(c => (
-                <Typography key={c} variant="h6" fontWeight={800}>{c}</Typography>
-              ))}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+      {/* CTA */}
+      <section className="mx-auto max-w-6xl px-4 pb-16 sm:px-6 sm:pb-20">
+        <div className="flex flex-col items-start gap-6 rounded-xl border border-line bg-surface p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div>
+            <h2 className="text-xl font-semibold sm:text-2xl">Your next interview is closer than it feels.</h2>
+            <p className="mt-1.5 text-sm text-muted">Set one up in under two minutes.</p>
+          </div>
+          <Button to={primary.to} size="lg" className="w-full sm:w-auto">
+            {primary.label} <ArrowRight className="size-4" />
+          </Button>
+        </div>
+      </section>
 
-      {/* ── Footer ── */}
-      <Box sx={{ py: 6, borderTop: '1px solid rgba(255,255,255,0.06)', bgcolor: 'rgba(15,23,42,0.8)' }}>
-        <Container maxWidth="lg">
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, gap: 4 }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 900, fontFamily: 'Outfit', mb: 0.5 }}>
-                TechBuddy <Box component="span" sx={{ color: '#6366f1' }}>AI</Box>
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#475569' }}>
-                © {new Date().getFullYear()} TechBuddy. All rights reserved.
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {['Privacy Policy', 'Terms of Service', 'Contact Us', 'Blog'].map(l => (
-                <Typography key={l} variant="body2" sx={{ color: '#64748b', cursor: 'pointer', '&:hover': { color: '#fff' } }}>{l}</Typography>
-              ))}
-            </Box>
-          </Box>
-        </Container>
-      </Box>
-
-    </Box>
+      <footer className="border-t border-line">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-subtle sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <Logo />
+          <p>© {new Date().getFullYear()} TechBuddy</p>
+        </div>
+      </footer>
+    </div>
   );
-};
-
-const FeatureCard = ({ icon, title, description }) => (
-  <Box sx={{ width: { xs: '100%', md: 'calc(50% - 16px)' } }}>
-    <Card sx={{
-      height: '100%',
-      background: 'rgba(30, 41, 59, 0.4)',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255,255,255,0.05)',
-      borderRadius: '20px',
-      transition: 'transform 0.3s, border-color 0.3s',
-      '&:hover': {
-        transform: 'translateY(-5px)',
-        borderColor: 'rgba(99, 102, 241, 0.3)'
-      }
-    }}>
-      <CardContent sx={{ p: 4 }}>
-        <Box sx={{ mb: 3 }}>{icon}</Box>
-        <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, fontFamily: 'Outfit' }}>
-          {title}
-        </Typography>
-        <Typography sx={{ color: '#94a3b8', lineHeight: 1.6 }}>
-          {description}
-        </Typography>
-      </CardContent>
-    </Card>
-  </Box>
-);
-
-export default LandingPage;
+}

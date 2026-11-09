@@ -1,128 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Box, Typography, TextField, Button, Paper, Link, MenuItem } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { Brain } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import useAuthStore from '@/store/useAuthStore';
+import AuthLayout from '@/components/layout/AuthLayout';
+import Button from '@/components/ui/Button';
+import { Field, Input } from '@/components/ui/Field';
+import PasswordInput from '@/components/ui/PasswordInput';
+import { Segmented } from '@/components/ui/Controls';
+import { Alert } from '@/components/ui/Feedback';
 
-import useAuthStore from '../store/useAuthStore';
-import { Alert, CircularProgress } from '@mui/material';
+const LEVELS = [
+  { value: 'Beginner', label: 'Beginner', hint: '0-2y' },
+  { value: 'Intermediate', label: 'Intermediate', hint: '2-5y' },
+  { value: 'Advanced', label: 'Advanced', hint: '5y+' },
+];
 
-const SignupPage = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    experienceLevel: 'Beginner'
-  });
+export default function SignupPage() {
+  const [form, setForm] = useState({ name: '', email: '', password: '', experienceLevel: 'Beginner' });
+  const [touched, setTouched] = useState(false);
   const { register, loading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const success = await register(formData);
-    if (success) {
-      navigate('/dashboard');
-    }
+  useEffect(() => () => clearError(), [clearError]);
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e && e.target ? e.target.value : e }));
+
+  const errors = {
+    name: !form.name.trim() ? 'Enter your name.' : '',
+    email: !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim()) ? 'Enter a valid email.' : '',
+    password: form.password.length < 6 ? 'Use at least 6 characters.' : '',
   };
+  const valid = !errors.name && !errors.email && !errors.password;
 
-  useEffect(() => {
-    return () => clearError();
-  }, [clearError]);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setTouched(true);
+    if (!valid) return;
+    if (await register({ ...form, name: form.name.trim(), email: form.email.trim() })) navigate('/setup', { replace: true });
   };
 
   return (
-    <Container maxWidth="sm">
-      <Box sx={{ mt: 8, mb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Paper elevation={0} className="glass-card" sx={{ p: 5, width: '100%', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <Brain size={48} color="#6366f1" style={{ marginBottom: '16px' }} />
-            <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit', mb: 1 }}>
-              Join TechBuddy AI
-            </Typography>
-            <Typography sx={{ color: '#94a3b8' }}>
-              Start your journey to becoming interview-ready
-            </Typography>
-          </Box>
-
-          {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
-
-          <form onSubmit={handleSubmit}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Full Name"
-              name="name"
-              autoFocus
-              value={formData.name}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              autoComplete="new-password"
-              value={formData.password}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              select
-              margin="normal"
-              fullWidth
-              name="experienceLevel"
-              label="Experience Level"
-              value={formData.experienceLevel}
-              onChange={handleChange}
-              sx={{ mb: 4 }}
-            >
-              <MenuItem value="Beginner">Beginner (0-2 years)</MenuItem>
-              <MenuItem value="Intermediate">Intermediate (2-5 years)</MenuItem>
-              <MenuItem value="Advanced">Advanced (5+ years)</MenuItem>
-            </TextField>
-            
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              sx={{ 
-                py: 1.5, 
-                mb: 3,
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                fontWeight: 700
-              }}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
-            </Button>
-            <Box sx={{ textAlign: 'center' }}>
-              <Link component={RouterLink} to="/login" variant="body2" sx={{ color: '#6366f1', textDecoration: 'none' }}>
-                {"Already have an account? Log In"}
-              </Link>
-            </Box>
-          </form>
-        </Paper>
-      </Box>
-    </Container>
+    <AuthLayout title="Create your account" subtitle="Free. Your first interview takes about two minutes to set up.">
+      {error && (
+        <Alert tone="danger" className="mb-5">
+          {error}
+        </Alert>
+      )}
+      <form onSubmit={onSubmit} className="space-y-4" noValidate>
+        <Field label="Name" error={touched && errors.name}>
+          {(p) => <Input {...p} autoComplete="name" value={form.name} onChange={set('name')} autoFocus />}
+        </Field>
+        <Field label="Email" error={touched && errors.email}>
+          {(p) => <Input {...p} type="email" inputMode="email" autoComplete="email" value={form.email} onChange={set('email')} />}
+        </Field>
+        <Field label="Password" hint="At least 6 characters." error={touched && errors.password}>
+          {(p) => <PasswordInput {...p} autoComplete="new-password" value={form.password} onChange={set('password')} />}
+        </Field>
+        <div className="space-y-1.5">
+          <p className="text-sm font-medium">Experience</p>
+          <Segmented name="Experience level" options={LEVELS} value={form.experienceLevel} onChange={set('experienceLevel')} />
+        </div>
+        <Button type="submit" className="w-full" loading={loading}>
+          Create account
+        </Button>
+      </form>
+      <p className="mt-6 text-sm text-muted">
+        Already have an account?{' '}
+        <Link to="/login" className="font-medium text-accent-text underline-offset-4 hover:underline">
+          Log in
+        </Link>
+      </p>
+    </AuthLayout>
   );
-};
-
-export default SignupPage;
+}

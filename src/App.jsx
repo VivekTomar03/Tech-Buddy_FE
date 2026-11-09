@@ -1,91 +1,44 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import Dashboard from './pages/Dashboard';
-import InterviewSetup from './pages/InterviewSetup';
-import LiveInterview from './pages/LiveInterview';
-import ReportPage from './pages/ReportPage';
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
+import { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import AppShell from '@/components/layout/AppShell';
+import ProtectedRoute, { GuestRoute } from '@/components/ProtectedRoute';
+import { PageLoader } from '@/components/ui/Feedback';
+import { useTheme } from '@/lib/theme';
 
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#6366f1',
-    },
-    secondary: {
-      main: '#ec4899',
-    },
-    background: {
-      default: '#0f172a',
-      paper: '#1e293b',
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: {
-      fontFamily: '"Outfit", sans-serif',
-    },
-    h2: {
-      fontFamily: '"Outfit", sans-serif',
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 600,
-        },
-      },
-    },
-  },
-});
+const LandingPage = lazy(() => import('@/pages/LandingPage'));
+const LoginPage = lazy(() => import('@/pages/LoginPage'));
+const SignupPage = lazy(() => import('@/pages/SignupPage'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const SetupPage = lazy(() => import('@/pages/SetupPage'));
+const InterviewPage = lazy(() => import('@/pages/InterviewPage'));
+const ReportPage = lazy(() => import('@/pages/ReportPage'));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage'));
+const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
-function App() {
+const guard = (el) => <ProtectedRoute>{el}</ProtectedRoute>;
+
+export default function App() {
+  const mode = useTheme((s) => s.mode);
   return (
-    <ThemeProvider theme={darkTheme}>
-      <CssBaseline />
-      <Router>
-        <div className="app-container">
-          <Navbar />
-          <Routes>
+    <>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route element={<AppShell />}>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/setup" element={
-              <ProtectedRoute>
-                <InterviewSetup />
-              </ProtectedRoute>
-            } />
-            <Route path="/interview/:id" element={
-              <ProtectedRoute>
-                <LiveInterview />
-              </ProtectedRoute>
-            } />
-            <Route path="/report/:id" element={
-              <ProtectedRoute>
-                <ReportPage />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </div>
-      </Router>
-    </ThemeProvider>
+            <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+            <Route path="/signup" element={<GuestRoute><SignupPage /></GuestRoute>} />
+            <Route path="/dashboard" element={guard(<DashboardPage />)} />
+            <Route path="/setup" element={guard(<SetupPage />)} />
+            <Route path="/report/:id" element={guard(<ReportPage />)} />
+            <Route path="/settings" element={guard(<SettingsPage />)} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+          {/* Full-screen workspace, no site navbar */}
+          <Route path="/interview/:id" element={guard(<InterviewPage />)} />
+        </Routes>
+      </Suspense>
+      <Toaster theme={mode} position="bottom-right" richColors closeButton toastOptions={{ className: 'font-sans' }} />
+    </>
   );
 }
-
-export default App;
